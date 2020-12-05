@@ -1,0 +1,114 @@
+---
+  - name: Install and Configure Tomcat with Student App Deployment
+    hosts: ansible-client
+    gather_facts: false
+    vars:
+      req_java: java-1.8.0-openjdk
+      set_java: jre-1.8.0-openjdk
+      req_tomcat_ver: 9.0.40
+      tomcat_url: https://mirrors.estointernet.in/apache/tomcat/tomcat-{{req_tomcat_ver.split('.')[0]}}/v{{req_tomcat_ver}}/bin/apache-tomcat-{{req_tomcat_ver}}.tar.gz
+      MySql8_jdbc_connector_url: https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.11/mysql-connector-java-8.0.11.jar
+      tomcat_port: 8080
+      tomcat_https_port: 8443
+      db_name: "appstack.cddtavta0o27.us-east-2.rds.amazonaws.com"
+      db_port: 3306
+    become: yes
+    tasks:
+      - name: Update Repos
+        yum:
+          name: "*"
+          state: latest
+      - name: Installing openjdk8
+        yum:
+          name: "{{req_java}}"
+          state: present
+    #  - name: Creating symlink to java
+    #    alternatives:
+    #      name: java
+    #      link: /usr/bin/java
+    #      path: /usr/lib/jvm/{{set_java}}/bin/java
+      - name: Create Dir
+        file:
+          path: "/opt/install"
+          state: directory
+
+      - name: Create tomcat group
+        group:
+          name: tomcat
+          state: present
+
+      - name: Create tomcat user
+        user:
+          name: tomcat
+          shell: /bin/bash
+          groups: tomcat,root
+          state: present
+
+      - name: Download Tomcat9
+        get_url:
+          url: "{{tomcat_url}}"
+          dest: "/opt/install/"
+
+      - name: Extract tar.gz
+        unarchive:
+          src: "/opt/install/apache-tomcat-{{req_tomcat_ver}}.tar.gz"
+          dest: "/opt/install/"
+          remote_src: yes
+
+      - name: Create Symlink for tomcat
+        file:
+          src: "/opt/install/apache-tomcat-{{req_tomcat_ver}}"
+          dest: "/opt/tomcat"
+          state: link
+
+      - name: modify server.xml file of tomcat
+        template:
+          src: server.xml.j2
+          dest: "/opt/tomcat/conf/server.xml"
+          backup: yes
+
+      - name: modify context.xml file of tomcat
+        template:
+          src: context.xml.j2
+          dest: "/opt/tomcat/conf/context.xml"
+          backup: yes
+
+      - name: Download and Deploy MySql JDBC driver
+        get_url:
+          url: "{{MySql8_jdbc_connector_url}}"
+          dest: "/opt/tomcat/lib/"
+
+      - name: Deploy Student app
+        copy:
+          src: "student.war"
+          dest: "/opt/tomcat/webapps/"
+          #remote_src: yes
+
+      - name: Deploy Cars Sample app
+        copy:
+          src: "Cars_Sample_App.war"
+          dest: "/opt/tomcat/webapps/"
+          #remote_src: yes
+
+      - name: Change tomcat home dir ownership & group
+        file:
+          path: "/opt/tomcat/"
+          owner: tomcat
+          group: tomcat
+          recurse: yes
+
+      - name: Deleting files not required from tomcat home dir
+        file:
+          path: "{{item}}"
+          state: absent
+        with_items:
+          - /opt/tomcat/RUNNING.txt
+          - /opt/tomcat/RELEASE-NOTES
+          - /opt/tomcat/README.md
+          - /opt/tomcat/LICENSE
+          - /opt/tomcat/CONTRIBUTING.md
+          - /opt/tomcat/BUILDING.txt
+          - /opt/tomcat/NOTICE
+
+      - name: Starting Tomcat
+        shell: runuser -l tomcat -c 'nohup /opt/tomcat/bin/startup.sh &'
