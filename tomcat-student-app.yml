@@ -12,6 +12,8 @@
       tomcat_https_port: 8443
       db_name: "appstack.cddtavta0o27.us-east-2.rds.amazonaws.com"
       db_port: 3306
+      db_user: admin
+      db_pass: Reuters123$
     become: yes
     tasks:
       - name: Update Repos
