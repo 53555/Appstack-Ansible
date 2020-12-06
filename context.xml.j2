@@ -10,6 +10,6 @@
     <!--
     <Manager pathname="" />
     -->
-    <Resource name="jdbc/supercars" auth="Container" type="javax.sql.DataSource" maxTotal="100" maxIdle="30" maxWaitMillis="10000" username="admin" password="Reuters123$" driverClassName="com.mysql.jdbc.Driver" url="jdbc:mysql://{{db_name}}:{{db_port}}/supercars?useSSL=false"/>
+    <Resource name="jdbc/supercars" auth="Container" type="javax.sql.DataSource" maxTotal="100" maxIdle="30" maxWaitMillis="10000" username="{{db_user}}" password="{{db_pass}}" driverClassName="com.mysql.jdbc.Driver" url="jdbc:mysql://{{db_name}}:{{db_port}}/supercars?useSSL=false"/>
     <Resource name="jdbc/TestDB" auth="Container" type="javax.sql.DataSource" maxTotal="100" maxIdle="30" maxWaitMillis="10000" username="student" password="student@1" driverClassName="com.mysql.jdbc.Driver" url="jdbc:mysql://{{db_name}}:{{db_port}}/studentapp"/>
 </Context>
