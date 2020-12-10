@@ -1,0 +1,20 @@
+[Unit]
+Description=Tomcat - instance %i
+After=syslog.target network.target
+
+[Service]
+Type=forking
+
+User=tomcat
+Group=tomcat
+
+Environment="CATALINA_OPTS=-Xms256M -Xmx512M -server -XX:+UseG1GC"
+
+ExecStart=/opt/tomcat/bin/startup.sh
+ExecStop=/opt/tomcat/bin/shutdown.sh
+
+#RestartSec=10
+#Restart=always
+
+[Install]
+WantedBy=multi-user.target

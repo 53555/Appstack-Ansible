@@ -1,19 +1,23 @@
 ---
   - name: Install and Configure Tomcat with Student App Deployment
-    hosts: ansible-client
+    hosts: appstack
     gather_facts: false
     vars:
       req_java: java-1.8.0-openjdk
       set_java: jre-1.8.0-openjdk
-      req_tomcat_ver: 9.0.40
+      req_tomcat_ver: 9.0.41
       tomcat_url: https://mirrors.estointernet.in/apache/tomcat/tomcat-{{req_tomcat_ver.split('.')[0]}}/v{{req_tomcat_ver}}/bin/apache-tomcat-{{req_tomcat_ver}}.tar.gz
       MySql8_jdbc_connector_url: https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.11/mysql-connector-java-8.0.11.jar
+      keycloak_adapter_url: https://downloads.jboss.org/keycloak/11.0.3/adapters/keycloak-oidc/keycloak-tomcat-adapter-dist-11.0.3.tar.gz
       tomcat_port: 8080
       tomcat_https_port: 8443
       db_name: "appstack.cddtavta0o27.us-east-2.rds.amazonaws.com"
       db_port: 3306
       db_user: admin
       db_pass: Reuters123$
+      student_web_path: /opt/tomcat/webapps/student/WEB-INF
+      student_met_path: /opt/tomcat/webapps/student/META-INF
+      systemd_path: /etc/systemd/system
     become: yes
     tasks:
       - name: Update Repos
@@ -29,7 +33,7 @@
     #      name: java
     #      link: /usr/bin/java
     #      path: /usr/lib/jvm/{{set_java}}/bin/java
-      - name: Create Dir
+      - name: Create Dir install
         file:
           path: "/opt/install"
           state: directory
@@ -80,6 +84,17 @@
           url: "{{MySql8_jdbc_connector_url}}"
           dest: "/opt/tomcat/lib/"
 
+      - name: Download and Deploy keycloak adapters
+        get_url:
+          url: "{{keycloak_adapter_url}}"
+          dest: "/opt/install/"
+
+      - name: Extract Keycloak adapter and deploy in the lib
+        unarchive:
+          src: "/opt/install/keycloak-tomcat-adapter-dist-11.0.3.tar.gz"
+          dest: "/opt/tomcat/lib/"
+          remote_src: yes
+
       - name: Deploy Student app
         copy:
           src: "student.war"
@@ -91,6 +106,19 @@
           src: "Cars_Sample_App.war"
           dest: "/opt/tomcat/webapps/"
           #remote_src: yes
+
+      - name: "Keycloak configuration on Student App web"
+        template:
+          src: "{{ item.src }}"
+          dest: "{{ student_web_path }}/{{ item.dest }}"
+        loop:
+          - { src: 'keycloak-web.xml.j2', dest: 'web.xml' }
+          - { src: 'keycloak.json.j2', dest: 'keycloak.json' }
+
+      - name: "Keycloak configuration on Student App met"
+        template:
+          src: "keycloak-context.xml.j2"
+          dest: "{{ student_met_path }}/context.xml"
 
       - name: Change tomcat home dir ownership & group
         file:
@@ -112,5 +140,21 @@
           - /opt/tomcat/BUILDING.txt
           - /opt/tomcat/NOTICE
 
-      - name: Starting Tomcat
-        shell: runuser -l tomcat -c 'nohup /opt/tomcat/bin/startup.sh &'
+      - name: Create system unit file
+        template:
+          src: "tomcat.service.j2"
+          dest: "{{systemd_path}}/tomcat.service"
+
+      - name: system deamon reload and enable
+        command: "{{item}}"
+        with_items:
+          - systemctl daemon-reload
+          - systemctl enable tomcat.service
+
+      - name: Restart service tomcat
+        service:
+          name: tomcat
+          state: restarted
+
+    #  - name: Starting Tomcat
+    #    shell: runuser -l tomcat -c 'nohup /opt/tomcat/bin/startup.sh &'
