@@ -107,19 +107,6 @@
           dest: "/opt/tomcat/webapps/"
           #remote_src: yes
 
-      - name: "Keycloak configuration on Student App web"
-        template:
-          src: "{{ item.src }}"
-          dest: "{{ student_web_path }}/{{ item.dest }}"
-        loop:
-          - { src: 'keycloak-web.xml.j2', dest: 'web.xml' }
-          - { src: 'keycloak.json.j2', dest: 'keycloak.json' }
-
-      - name: "Keycloak configuration on Student App met"
-        template:
-          src: "keycloak-context.xml.j2"
-          dest: "{{ student_met_path }}/context.xml"
-
       - name: Change tomcat home dir ownership & group
         file:
           path: "/opt/tomcat/"
@@ -150,6 +137,24 @@
         with_items:
           - systemctl daemon-reload
           - systemctl enable tomcat.service
+
+      - name: Restart service tomcat
+        service:
+          name: tomcat
+          state: restarted
+
+      - name: "Keycloak configuration on Student App web"
+        template:
+          src: "{{ item.src }}"
+          dest: "{{ student_web_path }}/{{ item.dest }}"
+        loop:
+          - { src: 'keycloak-web.xml.j2', dest: 'web.xml' }
+          - { src: 'keycloak.json.j2', dest: 'keycloak.json' }
+
+      - name: "Keycloak configuration on Student App met"
+        template:
+          src: "keycloak-context.xml.j2"
+          dest: "{{ student_met_path }}/context.xml"
 
       - name: Restart service tomcat
         service:
