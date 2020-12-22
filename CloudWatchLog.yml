@@ -13,7 +13,7 @@
           state: present
           update_cache: yes
       - name: empty existing file
-        command: {{item}}
+        command: "{{item}}"
         with_items:
           - echo "" > /etc/awslogs/awscli.conf
           - echo "" > /etc/awslogs/awslogs.conf
@@ -55,7 +55,7 @@
             [plugins]
             cwlogs = cwlogs
             [default]
-            region = "{{region}}"
+            region = us-east-2
 
       - name: system deamon reload and enable
         command: "{{item}}"
