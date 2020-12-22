@@ -144,8 +144,8 @@
           name: tomcat
           state: restarted
 
-      - name: sleep for 60s
-        command: sleep 60
+      - name: sleep for 30s
+        command: sleep 30
 
       - name: "Keycloak configuration on Student App web"
         template:
