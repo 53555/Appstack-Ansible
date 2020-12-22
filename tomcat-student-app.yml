@@ -1,6 +1,7 @@
 ---
   - name: Install and Configure Tomcat with Student App Deployment
-    hosts: appstack
+    hosts: localhost
+    connection: local
     gather_facts: false
     vars:
       req_java: java-1.8.0-openjdk
