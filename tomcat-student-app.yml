@@ -144,6 +144,9 @@
           name: tomcat
           state: restarted
 
+      - name: sleep for 60s
+        command: sleep 60
+
       - name: "Keycloak configuration on Student App web"
         template:
           src: "{{ item.src }}"
