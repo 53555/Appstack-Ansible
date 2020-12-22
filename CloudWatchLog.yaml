@@ -1,0 +1,69 @@
+---
+  - name: Deploy Cloudwatch Logs
+    hosts: localhost
+    connection: local
+    gather_facts: false
+    become: yes
+    vars:
+      region: us-east-2
+    tasks:
+      - name: Install awslogs
+        yum:
+          name: awslogs
+          state: present
+          update_cache: yes
+      - name: empty existing file
+        command: "{{item}}"
+        with_items:
+          - echo "" > /etc/awslogs/awscli.conf
+          - echo "" > /etc/awslogs/awslogs.conf
+      - name: Copy the content to awslogs.conf
+        copy:
+          dest: /etc/awslogs/awslogs.conf
+          content: |
+            [general]
+            state_file = /var/lib/awslogs/agent-state
+            [/var/log/messages]
+            datetime_format = %b %d %H:%M:%S
+            file = /var/log/messages
+            buffer_duration = 5000
+            log_stream_name = messages-{instance_id}
+            initial_position = start_of_file
+            log_group_name = AppStack
+
+            [/var/log/AppStackDeploy.log]
+            datetime_format = %Y-%m-%d %H:%M:%S,%f
+            file = /var/log/AppStackDeploy.log
+            buffer_duration = 5000
+            log_stream_name = userdata-{instance_id}
+            initial_position = start_of_file
+            log_group_name = AppStack
+
+            [/opt/tomcat/logs/catalina.*.log]
+            datetime_format = %Y-%m-%d %H:%M:%S,%f
+            DATE = $(date "+%Y-%m-%d")
+            file = /opt/tomcat/logs/catalina.*.log
+            buffer_duration = 5000
+            log_stream_name = appstack-tomcat-{instance_id}
+            initial_position = start_of_file
+            log_group_name = AppStack
+
+      - name: Copy the content to awslogs.conf
+        copy:
+          dest: /etc/awslogs/awscli.conf
+          content: |
+            [plugins]
+            cwlogs = cwlogs
+            [default]
+            region = "{{region}}"
+
+      - name: system deamon reload and enable
+        command: "{{item}}"
+        with_items:
+          - systemctl daemon-reload
+          - systemctl enable awslogsd
+
+      - name: Restart service awslogsd
+        service:
+          name: awslogsd
+          state: restarted
