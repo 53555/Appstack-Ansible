@@ -12,13 +12,11 @@
       keycloak_adapter_url: https://downloads.jboss.org/keycloak/11.0.3/adapters/keycloak-oidc/keycloak-tomcat-adapter-dist-11.0.3.tar.gz
       tomcat_port: 8080
       tomcat_https_port: 8443
-      db_name: "appstack.cddtavta0o27.us-east-2.rds.amazonaws.com"
-      db_port: 3306
-      db_user: admin
-      db_pass: Reuters123$
       student_web_path: /opt/tomcat/webapps/student/WEB-INF
       student_met_path: /opt/tomcat/webapps/student/META-INF
       systemd_path: /etc/systemd/system
+    vars_files:
+      - secret.yml
     become: yes
     tasks:
       - name: Update Repos
