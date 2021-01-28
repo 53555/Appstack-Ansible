@@ -136,11 +136,7 @@
         with_items:
           - systemctl daemon-reload
           - systemctl enable tomcat.service
-
-      - name: Restart service tomcat
-        service:
-          name: tomcat
-          state: restarted
+        notify: Restart service tomcat
 
       - name: sleep for 30s
         command: sleep 30
@@ -157,7 +153,9 @@
         template:
           src: "keycloak-context.xml.j2"
           dest: "{{ student_met_path }}/context.xml"
+        notify: Restart service tomcat
 
+    handlers:
       - name: Restart service tomcat
         service:
           name: tomcat
