@@ -136,7 +136,11 @@
         with_items:
           - systemctl daemon-reload
           - systemctl enable tomcat.service
-        notify: Restart service tomcat
+          
+      - name: Restart service tomcat
+        service:
+          name: tomcat
+          state: restarted     
 
       - name: sleep for 30s
         command: sleep 30
