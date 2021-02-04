@@ -136,7 +136,7 @@
         with_items:
           - systemctl daemon-reload
           - systemctl enable tomcat.service
-          
+
       - name: Restart service tomcat
         service:
           name: tomcat
@@ -157,8 +157,16 @@
         template:
           src: "keycloak-context.xml.j2"
           dest: "{{ student_met_path }}/context.xml"
+        
+        
+      - name: Change tomcat home dir ownership & group
+        file:
+          path: "/opt/tomcat/"
+          owner: tomcat
+          group: tomcat
+          recurse: yes
         notify: Restart service tomcat
-
+        
     handlers:
       - name: Restart service tomcat
         service:
